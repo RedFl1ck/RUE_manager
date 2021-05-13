@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav"
+    app:startDestination="@id/personalAccounting">
+
+    <fragment
+        android:id="@+id/personalAccounting"
+        android:name="com.example.reumanager.ui.accounting.PersonalAccounting"
+        android:label="PersonalAccounting"
+        tools:layout="@layout/fragment_accounting">
+        <action
+            android:id="@+id/action_personalAccounting_to_newEmployeeShow"
+            app:destination="@id/newEmployeeShow" />
+    </fragment>
+    <fragment
+        android:id="@+id/qualificationOfEmployees"
+        android:name="com.example.reumanager.ui.qualification.QualificationOfEmployees"
+        android:label="QualificationOfEmployees"
+        tools:layout="@layout/fragment_employees">
+        <action
+            android:id="@+id/action_qualificationOfEmployees_to_employeeShow"
+            app:destination="@id/employeeShow" />
+    </fragment>
+    <activity
+        android:id="@+id/newEmployeeShow"
+        android:name="com.example.reumanager.open.NewEmployeeShow"
+        android:label="activity_new_employee_show"
+        tools:layout="@layout/activity_new_employee_show" >
+        <argument
+            android:name="currentNewEmployee"
+            app:argType="com.example.reumanager.data.model.NewEmployee" />
+    </activity>
+    <activity
+        android:id="@+id/employeeShow"
+        android:name="com.example.reumanager.open.EmployeeShow"
+        android:label="activity_employee_show"
+        tools:layout="@layout/activity_employee_show" >
+        <argument
+            android:name="currentEmployee"
+            app:argType="com.example.reumanager.data.model.Employee" />
+    </activity>
+</navigation>
