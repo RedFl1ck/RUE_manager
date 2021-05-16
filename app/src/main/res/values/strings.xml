@@ -32,4 +32,5 @@
     <string name="title_activity_main">MainActivity</string>
     <string name="tab_text_1">Кадровый учет</string>
     <string name="tab_text_2">Квалификация сотрудников</string>
+    <string name="error_wrong_input">Недопустимые символы</string>
 </resources>

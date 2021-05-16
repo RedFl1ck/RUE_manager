@@ -1,15 +1,21 @@
 package com.example.reumanager.login
 
+import android.app.Activity
 import android.app.Application
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.util.Patterns
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.MutableLiveData
-import com.amier.reumanager.user.User
+import androidx.lifecycle.*
 import com.example.reumanager.R
+import com.example.reumanager.data.MainViewModel
+import com.example.reumanager.data.MainViewModelFactory
+import com.example.reumanager.data.model.LoginApi
+import com.example.reumanager.data.repository.Repository
+import com.example.reumanager.user.User.Companion.user
+import com.example.reumanager.user.User.Companion.userLog
 import com.google.android.material.textfield.TextInputLayout
 
 class LoginViewModel(application: Application) : AndroidViewModel(application){
@@ -18,17 +24,38 @@ class LoginViewModel(application: Application) : AndroidViewModel(application){
         MutableLiveData<Boolean>()
     }
 
-    private fun validation(loginPassword: TextInputLayout, loginEmail: TextInputLayout){
+    private  lateinit var viewModel: MainViewModel
+
+    private fun validation(viewLifecycleOwner: LifecycleOwner,
+                           viewModelStoreOwner: ViewModelStoreOwner,
+                           loginPassword: TextInputLayout, loginEmail: TextInputLayout){
         validateEmail(loginEmail)
         validatePass(loginPassword)
         if (validateEmail(loginEmail) &&
             validatePass(loginPassword)){
             val name = loginEmail.editText?.text.toString()
             val pass = loginPassword.editText?.text.toString()
-            // TODO: login user
-            User.user = true
-            currentLogin.value = User.user
-
+            val repository = Repository.Repository()
+            val viewModelFactory = MainViewModelFactory(repository)
+            viewModel = ViewModelProvider(viewModelStoreOwner, viewModelFactory).get(MainViewModel::class.java)
+            viewModel.auth(LoginApi(name, pass))
+            viewModel.myResponse.observe(viewLifecycleOwner, Observer {
+                userLog = if(it.code() == 200){
+                    Log.d("Response", it.body().toString())
+                    user.id = it.body()?.result?.id!!
+                    user.userId = it.body()?.result?.userId!!
+                    user.educationInfo = it.body()?.result?.educationInfo!!
+                    user.experience = it.body()?.result?.experience!!
+                    user.careerObjective = it.body()?.result?.careerObjective!!
+                    user.status = it.body()?.result?.status!!
+                    true
+                } else {
+                    Log.d("Response", it.toString())
+                    loginEmail.error = it.message()
+                    false
+                }
+                currentLogin.value = userLog
+            })
         }
     }
 
@@ -41,7 +68,6 @@ class LoginViewModel(application: Application) : AndroidViewModel(application){
             field?.error = getApplication<Application>().getString(R.string.error_wrong_e_mail)
             false
         } else {
-            //TODO: auth check
             field?.error = null
             true
         }
@@ -55,7 +81,6 @@ class LoginViewModel(application: Application) : AndroidViewModel(application){
                 false
             }
             temp.count() < 4 -> {
-                //TODO: auth check
                 field?.error = getApplication<Application>().getString(R.string.error_short_password)
                 false
             }
@@ -66,14 +91,20 @@ class LoginViewModel(application: Application) : AndroidViewModel(application){
         }
     }
 
-    fun setListeners(loginButton: Button, loginPassword: TextInputLayout, loginEmail: TextInputLayout){
+    fun setListeners(
+        viewLifecycleOwner: LifecycleOwner,
+        viewModelStoreOwner: ViewModelStoreOwner,
+        loginButton: Button,
+        loginPassword: TextInputLayout,
+        loginEmail: TextInputLayout
+    ){
 
         loginButton.setOnClickListener {
-            validation(loginPassword, loginEmail)
+            validation(viewLifecycleOwner, viewModelStoreOwner, loginPassword, loginEmail)
         }
         loginPassword.editText?.setOnEditorActionListener { _, actionId, _ ->
             if(actionId == EditorInfo.IME_ACTION_DONE){
-                validation(loginPassword, loginEmail)
+                validation(viewLifecycleOwner, viewModelStoreOwner, loginPassword, loginEmail)
                 true
             } else {
                 false

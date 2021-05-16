@@ -24,7 +24,7 @@ class EmployeeShow : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.show()
 
-        val arg = intent.getParcelableExtra<Employee>(EmployeeShow.EMPLOYEE)
+        val arg = intent.getParcelableExtra<Employee>(EMPLOYEE)
 
         binding.nameShow.text = arg?.name
         binding.surnameShow.text = arg?.surname

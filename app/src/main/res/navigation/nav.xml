@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav"
-    app:startDestination="@id/personalAccounting">
+    app:startDestination="@id/loadingActivity">
 
     <fragment
         android:id="@+id/personalAccounting"
@@ -41,4 +41,14 @@
             android:name="currentEmployee"
             app:argType="com.example.reumanager.data.model.Employee" />
     </activity>
+    <activity
+        android:id="@+id/loginActivity"
+        android:name="com.example.reumanager.login.LoginActivity"
+        android:label="activity_login"
+        tools:layout="@layout/activity_login" />
+    <activity
+        android:id="@+id/loadingActivity"
+        android:name="com.example.reumanager.LoadingActivity"
+        android:label="activity_loading"
+        tools:layout="@layout/activity_loading" />
 </navigation>
