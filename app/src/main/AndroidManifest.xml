@@ -13,7 +13,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
-        <activity android:name=".LoadingActivity"></activity>
+        <activity android:name=".LoadingActivity" />
         <activity android:name=".UserInfo" />
         <activity android:name=".register.RegisterActivity" />
         <activity
@@ -24,7 +24,7 @@
             android:label="@string/tab_text_2" />
         <activity
             android:name=".MainActivity"
-            android:label="@string/title_activity_main" />
+            android:label="@string/app_name" />
         <activity android:name=".login.LoginActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
