@@ -43,7 +43,13 @@ class LoginViewModel(application: Application) : AndroidViewModel(application){
                 userLog = if(it.code() == 200){
                     Log.d("Response", it.body().toString())
                     user.id = it.body()?.result?.id!!
-                    user.userId = it.body()?.result?.userId!!
+                    user.userId = it.body()?.result?.author?.id!!
+                    user.name = it.body()?.result?.author?.name!!
+                    user.surname = it.body()?.result?.author?.surname!!
+                    user.middleName = it.body()?.result?.author?.middleName!!
+                    val date = it.body()?.result?.author?.birthday!!.toString().split('T').toTypedArray()
+                    user.birthday = date[0]
+                    user.email = it.body()?.result?.author?.email!!
                     user.educationInfo = it.body()?.result?.educationInfo!!
                     user.experience = it.body()?.result?.experience!!
                     user.careerObjective = it.body()?.result?.careerObjective!!

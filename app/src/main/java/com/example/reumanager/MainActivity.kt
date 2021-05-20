@@ -11,6 +11,7 @@ import com.example.reumanager.ui.main.RecoveryTabsAdapter
 import com.example.reumanager.user.User
 import com.example.reumanager.user.User.Companion.user
 import com.example.reumanager.user.User.Companion.userLog
+import com.example.reumanager.user.User.Companion.userNull
 import com.google.android.material.tabs.TabLayout
 
 
@@ -53,12 +54,7 @@ class MainActivity : AppCompatActivity() {
             R.id.action_logout -> {
                 startActivity(Intent(this, LoginActivity::class.java))
                 userLog = false
-                user = User(0,
-                    0,
-                    "not found",
-                    "not found",
-                    "not found",
-                    0)
+                user = userNull()
                 true
             }
             else -> super.onOptionsItemSelected(item)

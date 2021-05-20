@@ -17,9 +17,7 @@ class PersonalAccounting : Fragment() {
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
-
-    //private lateinit var mCocktailViewModel: CocktailViewModel
-
+    
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,

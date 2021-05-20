@@ -18,10 +18,19 @@ class MyResponse {
 
     data class Result(
         val id: Int,
-        val userId: Int,
+        val author: Author,
         val educationInfo: String,
         val experience: String,
         val careerObjective: String,
         val status: Int
+    )
+
+    data class Author(
+        val id: Int,
+        val name: String,
+        val surname: String,
+        val middleName: String,
+        val birthday: String,
+        val email: String
     )
 }

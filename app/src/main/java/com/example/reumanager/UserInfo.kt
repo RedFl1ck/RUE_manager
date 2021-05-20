@@ -24,7 +24,10 @@ class UserInfo : AppCompatActivity() {
 
         binding.userCareerObjective.text = User.user.careerObjective
         binding.userEducationInfo.text = User.user.educationInfo
-        binding.userExperience .text = User.user.experience
+        binding.userExperience.text = User.user.experience
+        binding.userName.text = "${User.user.name} ${User.user.surname} ${User.user.middleName}"
+        binding.userEmail.text = User.user.email
+        binding.userBirthday.text = User.user.birthday
         binding.userStatus.text = when (User.user.status){
             0 -> "На рассмотрении"
             1 -> "Принята"
@@ -35,12 +38,7 @@ class UserInfo : AppCompatActivity() {
         binding.personalExitButton.setOnClickListener {
             startActivity(Intent(this, LoginActivity::class.java))
             User.userLog = false
-            User.user = User(0,
-                0,
-                "not found",
-                "not found",
-                "not found",
-                0)
+            User.user = User.userNull()
         }
     }
 }
