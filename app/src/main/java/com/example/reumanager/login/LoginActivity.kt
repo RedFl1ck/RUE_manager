@@ -29,7 +29,7 @@ class LoginActivity : AppCompatActivity() {
 
         mLoginViewModel = LoginViewModel(application)
 
-        mLoginViewModel.setListeners(this, this,
+        mLoginViewModel.setListeners(this, this, this,
             binding.loginButton, binding.loginPassword, binding.loginEmail)
 
         // Create the observer which updates the UI.

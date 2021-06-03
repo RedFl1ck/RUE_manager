@@ -21,7 +21,7 @@ class RegisterActivity : AppCompatActivity() {
 
         mRegisterViewModel = RegisterViewModel(application)
 
-        mRegisterViewModel.setListeners(this, this,
+        mRegisterViewModel.setListeners(this, this, this,
             binding.regName, binding.regSurname, binding.regPatronymic,
             binding.regBirthDate, binding.regEMail, binding.regPassword, binding.regPasswordSubmit,
             binding.regEducationInfo, binding.regExperience, binding.regCareerObjective,

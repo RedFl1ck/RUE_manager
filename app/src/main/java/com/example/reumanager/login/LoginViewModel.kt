@@ -2,6 +2,9 @@ package com.example.reumanager.login
 
 import android.app.Activity
 import android.app.Application
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
@@ -26,42 +29,74 @@ class LoginViewModel(application: Application) : AndroidViewModel(application){
 
     private  lateinit var viewModel: MainViewModel
 
-    private fun validation(viewLifecycleOwner: LifecycleOwner,
+    private fun isOnline(context: Context): Boolean {
+        val connectivityManager =
+            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val capabilities =
+            connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+        if (capabilities != null) {
+            when {
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> {
+                    Log.i("Internet", "NetworkCapabilities.TRANSPORT_CELLULAR")
+                    return true
+                }
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> {
+                    Log.i("Internet", "NetworkCapabilities.TRANSPORT_WIFI")
+                    return true
+                }
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> {
+                    Log.i("Internet", "NetworkCapabilities.TRANSPORT_ETHERNET")
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
+    private fun validation(context: Context, viewLifecycleOwner: LifecycleOwner,
                            viewModelStoreOwner: ViewModelStoreOwner,
                            loginPassword: TextInputLayout, loginEmail: TextInputLayout){
         validateEmail(loginEmail)
         validatePass(loginPassword)
         if (validateEmail(loginEmail) &&
             validatePass(loginPassword)){
-            val name = loginEmail.editText?.text.toString()
-            val pass = loginPassword.editText?.text.toString()
-            val repository = Repository.Repository()
-            val viewModelFactory = MainViewModelFactory(repository)
-            viewModel = ViewModelProvider(viewModelStoreOwner, viewModelFactory).get(MainViewModel::class.java)
-            viewModel.auth(LoginApi(name, pass))
-            viewModel.myResponse.observe(viewLifecycleOwner, Observer {
-                userLog = if(it.code() == 200){
-                    Log.d("Response", it.body().toString())
-                    user.id = it.body()?.result?.id!!
-                    user.userId = it.body()?.result?.author?.id!!
-                    user.name = it.body()?.result?.author?.name!!
-                    user.surname = it.body()?.result?.author?.surname!!
-                    user.middleName = it.body()?.result?.author?.middleName!!
-                    val date = it.body()?.result?.author?.birthday!!.toString().split('T').toTypedArray()
-                    user.birthday = date[0]
-                    user.email = it.body()?.result?.author?.email!!
-                    user.educationInfo = it.body()?.result?.educationInfo!!
-                    user.experience = it.body()?.result?.experience!!
-                    user.careerObjective = it.body()?.result?.careerObjective!!
-                    user.status = it.body()?.result?.status!!
-                    true
-                } else {
-                    Log.d("Response", it.toString())
-                    loginEmail.error = it.message()
-                    false
-                }
-                currentLogin.value = userLog
-            })
+            if(isOnline(context)) {
+                val name = loginEmail.editText?.text.toString()
+                val pass = loginPassword.editText?.text.toString()
+                val repository = Repository.Repository()
+                val viewModelFactory = MainViewModelFactory(repository)
+                viewModel = ViewModelProvider(viewModelStoreOwner, viewModelFactory).get(MainViewModel::class.java)
+                viewModel.auth(LoginApi(name, pass))
+                viewModel.myResponse.observe(viewLifecycleOwner, Observer {
+                    userLog = if(it.code() == 200){
+                        Log.d("Response", it.body().toString())
+                        user.id = it.body()?.result?.id!!
+                        user.userId = it.body()?.result?.author?.id!!
+                        user.name = it.body()?.result?.author?.name!!
+                        user.surname = it.body()?.result?.author?.surname!!
+                        user.middleName = it.body()?.result?.author?.middleName!!
+                        val date = it.body()?.result?.author?.birthday!!.toString().split('T').toTypedArray()
+                        user.birthday = date[0]
+                        user.email = it.body()?.result?.author?.email!!
+                        user.educationInfo = it.body()?.result?.educationInfo!!
+                        user.experience = it.body()?.result?.experience!!
+                        user.careerObjective = it.body()?.result?.careerObjective!!
+                        user.status = it.body()?.result?.status!!
+                        true
+                    } else {
+                        Log.d("Response", it.toString())
+                        loginEmail.error = it.message()
+                        false
+                    }
+                    currentLogin.value = userLog
+                })
+            } else {
+                val builder = android.app.AlertDialog.Builder(context)
+                builder.setPositiveButton("OK") { _, _ ->}
+                builder.setTitle("Нет доступа к интернету")
+                builder.setMessage("Проверьте подключение и попробуйте снова")
+                builder.create().show()
+            }
         }
     }
 
@@ -98,6 +133,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application){
     }
 
     fun setListeners(
+        context: Context,
         viewLifecycleOwner: LifecycleOwner,
         viewModelStoreOwner: ViewModelStoreOwner,
         loginButton: Button,
@@ -106,11 +142,11 @@ class LoginViewModel(application: Application) : AndroidViewModel(application){
     ){
 
         loginButton.setOnClickListener {
-            validation(viewLifecycleOwner, viewModelStoreOwner, loginPassword, loginEmail)
+            validation(context, viewLifecycleOwner, viewModelStoreOwner, loginPassword, loginEmail)
         }
         loginPassword.editText?.setOnEditorActionListener { _, actionId, _ ->
             if(actionId == EditorInfo.IME_ACTION_DONE){
-                validation(viewLifecycleOwner, viewModelStoreOwner, loginPassword, loginEmail)
+                validation(context, viewLifecycleOwner, viewModelStoreOwner, loginPassword, loginEmail)
                 true
             } else {
                 false

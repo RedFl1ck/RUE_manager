@@ -1,6 +1,9 @@
 package com.example.reumanager.register
 
 import android.app.Application
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
@@ -13,7 +16,6 @@ import com.example.reumanager.data.MainViewModel
 import com.example.reumanager.data.MainViewModelFactory
 import com.example.reumanager.data.model.RegisterApi
 import com.example.reumanager.data.repository.Repository
-import com.example.reumanager.user.User.Companion.userLog
 import com.google.android.material.textfield.TextInputLayout
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -27,7 +29,31 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
         MutableLiveData<Boolean>()
     }
 
-    private fun validation(
+    private fun isOnline(context: Context): Boolean {
+        val connectivityManager =
+            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val capabilities =
+            connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+        if (capabilities != null) {
+            when {
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> {
+                    Log.i("Internet", "NetworkCapabilities.TRANSPORT_CELLULAR")
+                    return true
+                }
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> {
+                    Log.i("Internet", "NetworkCapabilities.TRANSPORT_WIFI")
+                    return true
+                }
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> {
+                    Log.i("Internet", "NetworkCapabilities.TRANSPORT_ETHERNET")
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
+    private fun validation(context: Context,
         viewLifecycleOwner: LifecycleOwner, viewModelStoreOwner: ViewModelStoreOwner,
         name: TextInputLayout, surname: TextInputLayout, middleName: TextInputLayout,
         birthDate: TextInputLayout, email: TextInputLayout, pass: TextInputLayout,
@@ -54,31 +80,40 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
             validateEducationInfo(educationInfo) &&
             validateExperience(experience) &&
             validateCareerObjective(careerObjective)){
-            val name_ = name.editText?.text.toString()
-            val surname_ = surname.editText?.text.toString()
-            val patronymic_ = middleName.editText?.text.toString()
-            val email_ = email.editText?.text.toString()
-            val pass_ = pass.editText?.text.toString()
-            val educationInfo_ = educationInfo.editText?.text.toString()
-            val experience_ = experience.editText?.text.toString()
-            val careerObjective_ = careerObjective.editText?.text.toString()
-            val repository = Repository.Repository()
-            val viewModelFactory = MainViewModelFactory(repository)
-            val arrayDate = birthDate.editText?.text?.split(".")?.toTypedArray()?.joinToString("-")
-            val l = LocalDate.parse(arrayDate, DateTimeFormatter.ofPattern("dd-MM-yyyy"))
-            viewModel = ViewModelProvider(viewModelStoreOwner, viewModelFactory).get(MainViewModel::class.java)
-            viewModel.register(RegisterApi(name_, surname_, patronymic_, l.toString(), email_,
-                pass_, educationInfo_, experience_, careerObjective_))
-            viewModel.myRegResponse.observe(viewLifecycleOwner, Observer {
-                currentRegister.value = if(it.code() == 200){
-                    Log.d("Response", it.toString())
-                    true
-                } else {
-                    Log.d("Response", it.toString())
-                    email.error = it.message()
-                    false
-                }
-            })
+            if(isOnline(context)) {
+                val name_ = name.editText?.text.toString()
+                val surname_ = surname.editText?.text.toString()
+                val patronymic_ = middleName.editText?.text.toString()
+                val email_ = email.editText?.text.toString()
+                val pass_ = pass.editText?.text.toString()
+                val educationInfo_ = educationInfo.editText?.text.toString()
+                val experience_ = experience.editText?.text.toString()
+                val careerObjective_ = careerObjective.editText?.text.toString()
+                val repository = Repository.Repository()
+                val viewModelFactory = MainViewModelFactory(repository)
+                val arrayDate = birthDate.editText?.text.toString().split(".").toTypedArray()
+                val date = "${arrayDate[2]}-${arrayDate[1]}-${arrayDate[0]}"
+                viewModel = ViewModelProvider(viewModelStoreOwner, viewModelFactory).get(MainViewModel::class.java)
+                viewModel.register(RegisterApi(name_, surname_, patronymic_, date, email_,
+                    pass_, educationInfo_, experience_, careerObjective_))
+                viewModel.myRegResponse.observe(viewLifecycleOwner, Observer {
+                    currentRegister.value = if(it.code() == 200){
+                        Log.d("Response", it.toString())
+                        true
+                    } else {
+                        Log.d("Response", it.toString())
+                        email.error = it.message()
+                        false
+                    }
+                })
+            } else {
+                val builder = android.app.AlertDialog.Builder(context)
+                builder.setPositiveButton("OK") { _, _ ->}
+                builder.setTitle("Нет доступа к интернету")
+                builder.setMessage("Проверьте подключение и попробуйте снова")
+                builder.create().show()
+            }
+
         }
     }
 
@@ -145,75 +180,95 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
 
     private fun validatePass(field: TextInputLayout?): Boolean {
         val temp = field?.editText?.text.toString()
-        return if (temp.isEmpty()){
-            field?.error = getApplication<Application>().resources.getString(R.string.error_empty)
-            false
-        } else if (temp.count() < 4){
-            field?.error = getApplication<Application>().resources.getString(R.string.error_short_password)
-            false
-        } else {
-            field?.error = null
-            true
+        return when {
+            temp.isEmpty() -> {
+                field?.error = getApplication<Application>().resources.getString(R.string.error_empty)
+                false
+            }
+            temp.count() < 4 -> {
+                field?.error = getApplication<Application>().resources.getString(R.string.error_short_password)
+                false
+            }
+            else -> {
+                field?.error = null
+                true
+            }
         }
     }
 
     private fun validatePassSubmit(pass: TextInputLayout?, submitPass: TextInputLayout?): Boolean {
         val temp = submitPass?.editText?.text.toString()
-        return if (temp.isEmpty()){
-            submitPass?.error = getApplication<Application>().resources.getString(R.string.error_empty)
-            false
-        } else if (temp != pass?.editText?.text.toString()){
-            submitPass?.error = getApplication<Application>().resources.getString(R.string.error_match_password)
-            false
-        } else {
-            submitPass?.error = null
-            true
+        return when {
+            temp.isEmpty() -> {
+                submitPass?.error = getApplication<Application>().resources.getString(R.string.error_empty)
+                false
+            }
+            temp != pass?.editText?.text.toString() -> {
+                submitPass?.error = getApplication<Application>().resources.getString(R.string.error_match_password)
+                false
+            }
+            else -> {
+                submitPass?.error = null
+                true
+            }
         }
     }
 
     private fun validateEducationInfo(field: TextInputLayout?): Boolean {
         val temp = field?.editText?.text.toString()
-        return if (temp.isEmpty()){
-            field?.error = getApplication<Application>().resources.getString(R.string.error_empty)
-            false
-        } else if (temp.contains('*')){
-            field?.error = getApplication<Application>().resources.getString(R.string.error_wrong_input)
-            false
-        } else {
-            field?.error = null
-            true
+        return when {
+            temp.isEmpty() -> {
+                field?.error = getApplication<Application>().resources.getString(R.string.error_empty)
+                false
+            }
+            temp.contains('*') -> {
+                field?.error = getApplication<Application>().resources.getString(R.string.error_wrong_input)
+                false
+            }
+            else -> {
+                field?.error = null
+                true
+            }
         }
     }
 
     private fun validateExperience(field: TextInputLayout?): Boolean {
         val temp = field?.editText?.text.toString()
-        return if (temp.isEmpty()){
-            field?.error = getApplication<Application>().resources.getString(R.string.error_empty)
-            false
-        } else if (temp.contains('*')){
-            field?.error = getApplication<Application>().resources.getString(R.string.error_wrong_input)
-            false
-        } else {
-            field?.error = null
-            true
+        return when {
+            temp.isEmpty() -> {
+                field?.error = getApplication<Application>().resources.getString(R.string.error_empty)
+                false
+            }
+            temp.contains('*') -> {
+                field?.error = getApplication<Application>().resources.getString(R.string.error_wrong_input)
+                false
+            }
+            else -> {
+                field?.error = null
+                true
+            }
         }
     }
 
     private fun validateCareerObjective(field: TextInputLayout?): Boolean {
         val temp = field?.editText?.text.toString()
-        return if (temp.isEmpty()){
-            field?.error = getApplication<Application>().resources.getString(R.string.error_empty)
-            false
-        } else if (temp.contains('*')){
-            field?.error = getApplication<Application>().resources.getString(R.string.error_wrong_input)
-            false
-        } else {
-            field?.error = null
-            true
+        return when {
+            temp.isEmpty() -> {
+                field?.error = getApplication<Application>().resources.getString(R.string.error_empty)
+                false
+            }
+            temp.contains('*') -> {
+                field?.error = getApplication<Application>().resources.getString(R.string.error_wrong_input)
+                false
+            }
+            else -> {
+                field?.error = null
+                true
+            }
         }
     }
 
-    fun setListeners(
+    fun setListeners(context: Context,
         viewLifecycleOwner: LifecycleOwner, viewModelStoreOwner: ViewModelStoreOwner,
         name: TextInputLayout, surname: TextInputLayout, middleName: TextInputLayout,
         birthDate: TextInputLayout, email: TextInputLayout, pass: TextInputLayout,
@@ -221,12 +276,12 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
                      careerObjective: TextInputLayout, button: Button){
 
         button.setOnClickListener {
-            validation(viewLifecycleOwner, viewModelStoreOwner, name, surname, middleName,
+            validation(context, viewLifecycleOwner, viewModelStoreOwner, name, surname, middleName,
                 birthDate, email, pass, passSubmit, educationInfo, experience, careerObjective)
         }
         passSubmit.editText?.setOnEditorActionListener { _, actionId, _ ->
             if(actionId == EditorInfo.IME_ACTION_DONE){
-                validation(viewLifecycleOwner, viewModelStoreOwner, name, surname, middleName,
+                validation(context, viewLifecycleOwner, viewModelStoreOwner, name, surname, middleName,
                     birthDate, email, pass, passSubmit, educationInfo, experience, careerObjective)
                 true
             } else {
